@@ -33,6 +33,7 @@ public class Main extends Application {
     File outputFile = defaultOutputFile;
     TextArea inputTextArea = new TextArea();
     TextArea outputTextArea = new TextArea();
+    Tree t;
 
 
     public static void main(String[] args) {
@@ -204,14 +205,43 @@ public class Main extends Application {
     public void ApplyButtonClicked(Stage primaryStage, ComboBox <String> choice, TextField inputFileName, TextField outputFileName){
         if (inputFileName == null)
             inputFile = defaultInputFile;
+        else {
+            t = new Tree();
+            try {
+                BufferedReader dataRead = new BufferedReader(
+                        new FileReader(inputFile));
+                t.createTree(dataRead);
+            } catch (Exception ex) {
+                return;
+            }
+        }
         if (outputFileName == null)
             outputFile = defaultOutputFile;
 
         ////////call the function that changes in the files, you don't need to pass any parameters since all the files are in global variables
         if (choice.getValue().compareTo("Check Consistency") == 0){}
-        else if (choice.getValue().compareTo("Formatting") == 0){}
+        else if (choice.getValue().compareTo("Formatting") == 0)
+        {
+            try {
+                BufferedWriter dataWrite = new BufferedWriter(
+                        new FileWriter(outputFile));
+                t.format(dataWrite);
+            }catch(Exception ex)
+            {
+                return;
+            }
+        }
         else if (choice.getValue().compareTo("Converting to JSON") == 0){}
-        else if (choice.getValue().compareTo("Minifying") == 0){}
+        else if (choice.getValue().compareTo("Minifying") == 0)
+        {
+            try {
+                BufferedWriter dataWrite = new BufferedWriter(new FileWriter(defaultOutputFile));
+                t.minify(dataWrite);
+            }catch(Exception ex)
+            {
+                return;
+            }
+        }
         else if (choice.getValue().compareTo("Compressing") == 0){}
 
         //reading input file to text area
