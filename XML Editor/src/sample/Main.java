@@ -33,7 +33,10 @@ public class Main extends Application {
     File outputFile = defaultOutputFile;
     TextArea inputTextArea = new TextArea();
     TextArea outputTextArea = new TextArea();
+    BufferedReader dataRead = null;
+    BufferedWriter dataWrite = null;
     Tree t;
+    TST[] asci = new TST[256];
 
 
     public static void main(String[] args) {
@@ -214,8 +217,9 @@ public class Main extends Application {
         else {
             t = new Tree();
             try {
-                BufferedReader dataRead = new BufferedReader(
+                dataRead = new BufferedReader(
                         new FileReader(inputFile));
+                System.out.println("entered try in apply");
                 t.createTree(dataRead);
             } catch (Exception ex) {
                 return;
@@ -229,7 +233,7 @@ public class Main extends Application {
         else if (choice.getValue().compareTo("Formatting") == 0)
         {
             try {
-                BufferedWriter dataWrite = new BufferedWriter(
+                dataWrite = new BufferedWriter(
                         new FileWriter(outputFile));
                 t.format(dataWrite);
             }catch(Exception ex)
@@ -241,7 +245,7 @@ public class Main extends Application {
         else if (choice.getValue().compareTo("Minifying") == 0)
         {
             try {
-                BufferedWriter dataWrite = new BufferedWriter(new FileWriter(defaultOutputFile));
+                dataWrite = new BufferedWriter(new FileWriter(defaultOutputFile));
                 t.minify(dataWrite);
             }catch(Exception ex)
             {
@@ -262,7 +266,7 @@ public class Main extends Application {
         String line = null;
         while (true) {
             try {
-                if (!((line = br1.readLine()) != null)) break;
+                if (((line = br1.readLine()) == null)) break;
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -303,25 +307,75 @@ public class Main extends Application {
         }
 
         public void compress() throws IOException {
+
+            //array of Ascii Characters
+            for (int i = 0; i < 256; i++)
+            {
+                TSTNode char_root = new TSTNode((char) i);
+                asci[i] = new TST(char_root);
+            }
+
+            //reading from and writing to
             FileInputStream in = null;
             FileOutputStream out = null;
-            try {
-                try {
-                    in = new FileInputStream(inputFile.getAbsolutePath());
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    out = new FileOutputStream(outputFile.getAbsolutePath());
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+            int code = 256;
+            TSTNode [] result = new TSTNode[1];
+            String s = "";
+            int longest_string = 0;
 
+            try {
+                in = new FileInputStream(inputFile.getAbsolutePath());
+                out = new FileOutputStream(outputFile.getAbsolutePath());
+
+                int x, y, previous=0,i;
+                boolean lsb, case1;
 
                 byte[] buf = new byte[512]; // optimize the size of buffer to your need
+                byte[] buf2 = new byte[2];
                 int num;
-                while ((num = in.read(buf)) != -1) {
-                    out.write(buf, 0, num);
+                dataRead = new BufferedReader(new FileReader(inputFile));
+                try {
+                    while ((s = dataRead.readLine()) != null) {
+                        i = 0;
+                        lsb = true;
+                        num = s.length();
+
+                        //the LZW algorithm should go here
+                        while (i < s.length() && s.length() != 0) {
+                            longest_string = asci[(int) s.charAt(0)].search(asci[(int) s.charAt(0)].getTSTRoot(), result, s, 0, 0);
+                            x = result[0].getCode();
+                            if (s.length() > longest_string){
+                                asci[(int) s.charAt(0)].insert(result[0], s.charAt(longest_string), true, code);
+                                code++;
+                                s = s.substring(longest_string);
+                                i = 0;
+                            }
+                            else s = "";
+
+                            if (lsb) {
+                                buf2[0] = (byte) (x >> 4);
+                                previous = x << 4;
+                                out.write(buf2, 0, 1);
+                                lsb = false;
+                            } else {
+                                y = x >> 8;
+                                y &= ~0x0F;
+                                previous |= y;
+                                buf2[0] = (byte) previous;
+                                buf2[1] = (byte) (x);
+                                out.write(buf2, 0, 2);
+                                lsb = true;
+                            }
+                        }
+
+                        if (num % 2 == 1) {
+                            buf2[0] = (byte) previous;
+                            out.write(buf2, 0, 1);
+                        }
+                    }dataRead.close();
+                }
+                catch (IOException e){
+                    return;
                 }
             }finally {
                 if (in != null) {
