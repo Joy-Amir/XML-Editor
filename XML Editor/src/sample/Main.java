@@ -312,6 +312,7 @@ public class Main extends Application {
             for (int i = 0; i < 256; i++)
             {
                 TSTNode char_root = new TSTNode((char) i);
+                char_root.setCode(i);
                 asci[i] = new TST(char_root);
             }
 
