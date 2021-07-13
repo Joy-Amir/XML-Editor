@@ -106,7 +106,13 @@ public class Main extends Application {
 
         //identifying apply button
         Button ApplyButton = new Button("Apply");
-        ApplyButton.setOnAction(e->{ApplyButtonClicked(primaryStage, choice, inputFileName, outputFileName); });
+        ApplyButton.setOnAction(e->{
+            try {
+                ApplyButtonClicked(primaryStage, choice, inputFileName, outputFileName);
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        });
 
         //putting constraints on HBox and VBox
         HBox hBox = new HBox();
@@ -202,7 +208,7 @@ public class Main extends Application {
         outputFileName.setText(outputFile.getAbsolutePath());
     }
 
-    public void ApplyButtonClicked(Stage primaryStage, ComboBox <String> choice, TextField inputFileName, TextField outputFileName){
+    public void ApplyButtonClicked(Stage primaryStage, ComboBox <String> choice, TextField inputFileName, TextField outputFileName) throws IOException {
         if (inputFileName == null)
             inputFile = defaultInputFile;
         else {
@@ -242,7 +248,7 @@ public class Main extends Application {
                 return;
             }
         }
-        else if (choice.getValue().compareTo("Compressing") == 0){}
+        else if (choice.getValue().compareTo("Compressing") == 0){compress();}
 
         //reading input file to text area
         String fileName = inputFile.getAbsolutePath();
@@ -296,4 +302,34 @@ public class Main extends Application {
         primaryStage.setY((primScreenBounds.getHeight() - primaryStage.getHeight()) / 2);
         }
 
+        public void compress() throws IOException {
+            FileInputStream in = null;
+            FileOutputStream out = null;
+            try {
+                try {
+                    in = new FileInputStream(inputFile.getAbsolutePath());
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    out = new FileOutputStream(outputFile.getAbsolutePath());
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+
+                byte[] buf = new byte[512]; // optimize the size of buffer to your need
+                int num;
+                while ((num = in.read(buf)) != -1) {
+                    out.write(buf, 0, num);
+                }
+            }finally {
+                if (in != null) {
+                    in.close();
+                }
+                if (out != null) {
+                    out.close();
+                }
+            }
+        }
     }
