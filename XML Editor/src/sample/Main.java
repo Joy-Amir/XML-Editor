@@ -21,7 +21,10 @@ import java.io.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
 
 public class Main extends Application {
 
@@ -37,6 +40,7 @@ public class Main extends Application {
     BufferedWriter dataWrite = null;
     Tree t;
     TST[] asci = new TST[256];
+    long lines = 0;
 
 
     public static void main(String[] args) {
@@ -65,7 +69,8 @@ public class Main extends Application {
         GridPane.setConstraints(choiceLabel, 0,0 );
 
         ComboBox<String> choice= new ComboBox<>();
-        choice.getItems().addAll("Check Consistency", "Formatting", "Converting to JSON", "Minifying", "Compressing");
+        //Add decompressing
+        choice.getItems().addAll("Check Consistency", "Formatting", "Converting to JSON", "Minifying", "Compressing", "De-compressing");
         choice.setPromptText("Choose one");
         GridPane.setConstraints(choice, 1,0 );
 
@@ -220,7 +225,8 @@ public class Main extends Application {
                 dataRead = new BufferedReader(
                         new FileReader(inputFile));
                 System.out.println("entered try in apply");
-                t.createTree(dataRead);
+                lines = t.createTree(dataRead);
+                System.out.println("tree created");
             } catch (Exception ex) {
                 return;
             }
@@ -252,8 +258,11 @@ public class Main extends Application {
                 return;
             }
         }
-        else if (choice.getValue().compareTo("Compressing") == 0){compress();}
+        else if (choice.getValue().compareTo("Compressing") == 0){System.out.println("entered else if");
+            compress();}
+        else if (choice.getValue().compareTo("De-compressing") == 0){decompress();}
 
+        System.out.println("returned from else if\n " + lines);
         //reading input file to text area
         String fileName = inputFile.getAbsolutePath();
         BufferedReader br1 = null;
@@ -264,15 +273,29 @@ public class Main extends Application {
         }
         StringBuilder sb1 = new StringBuilder();
         String line = null;
-        while (true) {
-            try {
-                if (((line = br1.readLine()) == null)) break;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (lines < 3000 && lines != -1) {
+            while (true) {
+                try {
+                    if (((line = br1.readLine()) == null)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-            sb1.append(line);
-            sb1.append(System.lineSeparator());
+                sb1.append(line);
+                sb1.append(System.lineSeparator());
+            }
+        }
+        else{
+            for(int i = 0; i < 3000 ; i++) {
+                try {
+                    if (((line = br1.readLine()) == null)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                sb1.append(line);
+                sb1.append(System.lineSeparator());
+            }
         }
         inputTextArea.setText(sb1.toString());
 
@@ -287,15 +310,30 @@ public class Main extends Application {
         }
         StringBuilder sb2 = new StringBuilder();
         String line2 = null;
-        while (true) {
-            try {
-                if (!((line2 = br2.readLine()) != null)) break;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-            sb2.append(line2);
-            sb2.append(System.lineSeparator());
+        if (lines < 3000 && lines != -1) {
+            while (true) {
+                try {
+                    if (((line2 = br2.readLine()) == null)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                sb2.append(line2);
+                sb2.append(System.lineSeparator());
+            }
+        }
+        else {
+            for(int i = 0; i < 3000 ; i++) {
+                try {
+                    if (((line2 = br2.readLine()) == null)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                sb2.append(line2);
+                sb2.append(System.lineSeparator());
+            }
         }
         outputTextArea.setText(sb2.toString());
 
@@ -304,87 +342,223 @@ public class Main extends Application {
         Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
         primaryStage.setX((primScreenBounds.getWidth() - primaryStage.getWidth()) / 2);
         primaryStage.setY((primScreenBounds.getHeight() - primaryStage.getHeight()) / 2);
+    }
+
+
+
+
+    public void compress() throws IOException {
+
+        //array of Ascii Characters
+        for (int i = 0; i < 256; i++)
+        {
+            TSTNode char_root = new TSTNode((char) i);
+            char_root.setCode(i);
+            asci[i] = new TST(char_root);
         }
 
-        public void compress() throws IOException {
+        //reading from and writing to
+        FileOutputStream out = null;
+        int code = 256;
+        TSTNode [] result = new TSTNode[1];
+        String s = "";
+        int longest_string = 0;
 
-            //array of Ascii Characters
-            for (int i = 0; i < 256; i++)
-            {
-                TSTNode char_root = new TSTNode((char) i);
-                char_root.setCode(i);
-                asci[i] = new TST(char_root);
-            }
+        try {
+            out = new FileOutputStream(outputFile.getAbsolutePath());
 
-            //reading from and writing to
-            FileInputStream in = null;
-            FileOutputStream out = null;
-            int code = 256;
-            TSTNode [] result = new TSTNode[1];
-            String s = "";
-            int longest_string = 0;
-
+            int x, y, previous=0;
+            boolean lsb = true;
+            boolean end = false;
+            boolean firstline = true;
+            s = "";
+            String s2;
+            byte[] buf2 = new byte[2];
+            dataRead = new BufferedReader(new FileReader(inputFile));
             try {
-                in = new FileInputStream(inputFile.getAbsolutePath());
-                out = new FileOutputStream(outputFile.getAbsolutePath());
-
-                int x, y, previous=0,i;
-                boolean lsb, case1;
-
-                byte[] buf = new byte[512]; // optimize the size of buffer to your need
-                byte[] buf2 = new byte[2];
-                int num;
-                dataRead = new BufferedReader(new FileReader(inputFile));
-                try {
-                    while ((s = dataRead.readLine()) != null) {
-                        i = 0;
-                        lsb = true;
-                        num = s.length();
-
-                        //the LZW algorithm should go here
-                        while (i < s.length() && s.length() != 0) {
-                            longest_string = asci[(int) s.charAt(0)].search(asci[(int) s.charAt(0)].getTSTRoot(), result, s, 0, 0);
-                            x = result[0].getCode();
-                            if (s.length() > longest_string){
+                while (true) {
+                    if((s2 = dataRead.readLine()) == null)
+                    {
+                        end = true;
+                    }
+                    else if (firstline)
+                    {
+                        s = s2;
+                        firstline = false;
+                    }
+                    else
+                    {
+                        s = s.concat("\r\n" +s2);
+                    }
+                    while (s.length() > 20 || (end && s.length() > 0)) {
+                        longest_string = asci[(int) s.charAt(0)].search(asci[(int) s.charAt(0)].getTSTRoot(), result, s, 0, 0);
+                        x = result[0].getCode();
+                        if (s.length() > longest_string){
+                            if(code < 4096)
+                            {
                                 asci[(int) s.charAt(0)].insert(result[0], s.charAt(longest_string), true, code);
                                 code++;
-                                s = s.substring(longest_string);
-                                i = 0;
                             }
-                            else s = "";
+                            s = s.substring(longest_string);
+                        }
+                        else s = "";
 
-                            if (lsb) {
-                                buf2[0] = (byte) (x >> 4);
-                                previous = x << 4;
-                                out.write(buf2, 0, 1);
+                        if (lsb) {
+                            buf2[0] = (byte) (x >> 4);
+                            previous = x << 4;
+                            out.write(buf2, 0, 1);
+                            lsb = false;
+                        } else {
+                            y = x >> 8;
+                            y &= 0x0F;
+                            previous |= y;
+                            buf2[0] = (byte) previous;
+                            buf2[1] = (byte) (x);
+                            out.write(buf2, 0, 2);
+                            lsb = true;
+                        }
+                    }
+                    if (end)
+                        break;
+
+                }
+                if (lsb == false) {
+                    buf2[0] = (byte) previous;
+                    out.write(buf2, 0, 1);
+                }
+                dataRead.close();
+            }
+            catch (IOException e){
+                return;
+            }
+        }finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+
+    }
+
+
+
+    public void decompress()
+    {
+        FileInputStream in = null;
+        int n = 50;
+        ArrayList<HTElement>[] hash = new ArrayList[n];
+        int key = 0;
+        for (int i = 0; i < n; i++) {
+            hash[i] = new ArrayList<HTElement>();
+        }
+        try {
+            BufferedWriter dataWrite = new BufferedWriter(
+                    new FileWriter(outputFile));
+            in = new FileInputStream(inputFile.getAbsolutePath());
+            int x, previous = 0, j;
+            boolean lsb, case1;
+
+            byte[] buf2 = new byte[768];
+            int num;
+
+
+            int code = 256;
+            int databytes = 0;
+            String lastText = "";
+            String data;
+            boolean first_decoded = true;
+            boolean writeflag = false;
+            try {
+                while ((num = in.read(buf2)) != -1) {
+                    j = 0;
+                    lsb = true;
+                    case1 = true;
+                    while (j < num) {
+                        x = (int) (buf2[j]) & 0x0ff;
+                        if (x < 0)
+                        {
+                            x = x + 256;
+                        }
+                        if (case1) {
+                            if (lsb == true) {
+                                previous = x << 4 & 0x0fff;
                                 lsb = false;
                             } else {
-                                y = x >> 8;
-                                y &= ~0x0F;
-                                previous |= y;
-                                buf2[0] = (byte) previous;
-                                buf2[1] = (byte) (x);
-                                out.write(buf2, 0, 2);
+                                previous = (previous | (x >> 4) )& 0x0fff;
+                                databytes = previous & 0x0fff;
+                                writeflag = true;
+
+                                previous = (x << 8)%4096;;
+                                case1 = false;
                                 lsb = true;
                             }
+                        } else {
+                            previous =(previous | x) & 0x000000000000000000000000fff;
+                            databytes = previous & 0x0fff;
+                            writeflag = true;
+                            case1 = true;
                         }
+                        if (writeflag == true) {
+                            if (databytes == code) {
+                                lastText = lastText + lastText.charAt(0);
+                                dataWrite.write(lastText);
+                                key = (code - 256) % n;
+                                HTElement listElement = new HTElement(code, lastText);
+                                hash[key].add(listElement);
 
-                        if (num % 2 == 1) {
-                            buf2[0] = (byte) previous;
-                            out.write(buf2, 0, 1);
+
+                            } else {
+                                if (databytes > 255) {
+                                    key = (databytes - 256) % n;
+                                    data = "";
+                                    int ksize = hash[key].size();
+                                    for (int k = 0; k < ksize; k++) {
+                                        if (hash[key].get(k).getCode() == databytes) {
+                                            data = hash[key].get(k).getText();
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    data = Character.toString((char) databytes);
+                                }
+
+                                dataWrite.write(data);
+                                if (first_decoded == true)
+                                {
+                                    lastText = data;
+                                    first_decoded = false;
+                                    j++;
+                                    writeflag = false;
+                                    continue;
+                                }
+                                if (code < 4096) {
+                                    lastText = lastText + data.charAt(0);
+                                    key = (code - 256) % n;
+                                    HTElement listElement = new HTElement(code, lastText);
+                                    hash[key].add(listElement);
+                                    lastText = data;
+                                }
+
+
+                            }
+                            code++;
+                            writeflag = false;
                         }
-                    }dataRead.close();
+                        j++;
+                    }
+
                 }
-                catch (IOException e){
-                    return;
-                }
-            }finally {
+                //System.out.println("Done");
+            } finally {
                 if (in != null) {
                     in.close();
                 }
-                if (out != null) {
-                    out.close();
-                }
             }
+            dataWrite.close();
+        } catch (Exception ex) {
+            return;
         }
     }
+}
+
+
+
