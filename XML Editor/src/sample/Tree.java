@@ -125,6 +125,7 @@ public class Tree
 
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return -1;
         }
         return lines;
@@ -137,6 +138,7 @@ public class Tree
             dataWrite.close();
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
 
@@ -172,6 +174,7 @@ public class Tree
             }
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
     }
@@ -182,6 +185,7 @@ public class Tree
             dataWrite.close();
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
     }
@@ -270,6 +274,7 @@ public class Tree
             }
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
 
@@ -345,13 +350,13 @@ public class Tree
                     if (flag3 == 0) {
                         dataWrite.write("\n");
                         for (int i = 0; i < (4 * level); i++)
-                            System.out.print(" ");
+                            dataWrite.write(" ");
                         dataWrite.write("\"" + name.substring(0, name.indexOf(' ')) + "\": ");
                         dataWrite.write("{");
                     } else {
                         dataWrite.write("\n");
                         for (int i = 0; i < (4 * level) + 2; i++)
-                            System.out.print(" ");
+                            dataWrite.write(" ");
                         dataWrite.write("{");
                     }
 
@@ -411,7 +416,7 @@ public class Tree
                         if (flag3 == 0) {
                             dataWrite.write("\n");
                             for (int o = 0; o < (4 * (level)); o++)
-                                System.out.print(" ");
+                                dataWrite.write(" ");
                             dataWrite.write("\"" + name.substring(0, name.indexOf(' ')) + "\": ");
                             dataWrite.write("{");
                         } else {
@@ -425,7 +430,7 @@ public class Tree
                             if (name.charAt(i) == ' ') {
                                 dataWrite.write("\n");
                                 for (int o = 0; o < (4 * (level + 1)); o++)
-                                    System.out.print(" ");
+                                    dataWrite.write(" ");
                                 dataWrite.write("\"@" + name.substring(name.indexOf(' ') + 1, name.indexOf('=')) + "\": ");
                                 dataWrite.write(name.substring(name.indexOf('"'), name.indexOf('/')));
 
@@ -537,6 +542,7 @@ public class Tree
         }//try
         catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
 
@@ -546,6 +552,15 @@ public class Tree
     public void print_xml(BufferedWriter dataWrite) {
         ArrayList<Node> array = new ArrayList<Node>();
         print_XML(root, array, -1,dataWrite);
+        try{
+        dataWrite.close();
+        }
+        catch(Exception ex)
+        {
+            ex.printStackTrace();
+            return;
+        }
+        //System.out.print("HElloo");
     }
 
 }

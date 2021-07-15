@@ -247,7 +247,18 @@ public class Main extends Application {
                 return;
             }
         }
-        else if (choice.getValue().compareTo("Converting to JSON") == 0){}
+        else if (choice.getValue().compareTo("Converting to JSON") == 0){
+            try {
+                BufferedWriter dataWrite = new BufferedWriter(
+                        new FileWriter(outputFile));
+                t.print_xml(dataWrite);
+            }catch(Exception ex)
+            {
+                ex.printStackTrace();
+                return;
+            }
+
+        }
         else if (choice.getValue().compareTo("Minifying") == 0)
         {
             try {
@@ -429,6 +440,7 @@ public class Main extends Application {
                 dataRead.close();
             }
             catch (IOException e){
+                e.printStackTrace();
                 return;
             }
         }finally {
