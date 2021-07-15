@@ -596,7 +596,7 @@ public class Main extends Application {
                                     sb3.append("Error in line " + openline+ " in closing of the preprocessor tag ");
                                     sb3.append(System.lineSeparator());
                                     error_flag = true;
-                                    dataWrite.write(s.substring(2, index - 1) + "?>");
+                                    dataWrite.write(s.substring(0, index - 1) + "?>");
                                 }
                                 else
                                 {dataWrite.write(s.substring(0, index + 1));}}
