@@ -450,7 +450,7 @@ public class Tree
                 }//if
 
                 //<id>123</id>
-                else {
+                else if (comp==0){
                     flag = 1;
                     if (flag3 == 0) {
                         dataWrite.write("\n");
