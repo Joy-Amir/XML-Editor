@@ -25,17 +25,22 @@ import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class Main extends Application {
 
     Scene FirstScene;
     Scene SecondScene;
+    Scene ThirdScene;
     File defaultInputFile = new File("D:\\ASU\\3rd Electrical\\Second Term\\Data Structures\\Project\\data\\data-sample.xml");
     File inputFile = defaultInputFile;
     File defaultOutputFile = new File ("D:\\ASU\\3rd Electrical\\Second Term\\Data Structures\\Project\\data\\blabla.xml");
     File outputFile = defaultOutputFile;
     TextArea inputTextArea = new TextArea();
     TextArea outputTextArea = new TextArea();
+    TextArea Errors = new TextArea();
+    TextArea inputTextArea3 = new TextArea();
+    TextArea outputTextArea3 = new TextArea();
     BufferedReader dataRead = null;
     BufferedWriter dataWrite = null;
     Tree t;
@@ -190,6 +195,68 @@ public class Main extends Application {
 
         SecondScene = new Scene (vBox2);
 
+///////////////
+// THIRD SCENE
+///////////////
+
+        //identifying the grid
+        GridPane grid3 = new GridPane();
+        grid3.setPadding(new Insets(10, 10, 10, 10));
+        grid3.setVgap(8);
+        grid3.setHgap(10);
+
+        //errors shown in text area
+        Label ErrorsLabel = new Label("Errors shown:");
+        GridPane.setConstraints(ErrorsLabel, 0, 0);
+
+        Errors.setPrefHeight(160);
+        Errors.setPrefWidth(650);
+        GridPane.setConstraints(Errors, 0,1 );
+
+        //input file
+        Label LabelInputFile3 = new Label("Input File:");
+        LabelInputFile3.setFont(Font.font("",FontWeight.BOLD, FontPosture.REGULAR,14));
+        GridPane.setConstraints(LabelInputFile3, 0,2 );
+
+        inputTextArea3.setPrefHeight(400);
+        inputTextArea3.setPrefWidth(650);
+        GridPane.setConstraints(inputTextArea3, 0,3 );
+
+        //output file
+        Label LabelOutputFile3 = new Label("Suggested Corrections:");
+        LabelOutputFile3.setFont(Font.font("",FontWeight.BOLD, FontPosture.REGULAR,14));
+        GridPane.setConstraints(LabelOutputFile3, 1,2 );
+
+        outputTextArea3.setPrefHeight(400);
+        outputTextArea3.setPrefWidth(650);
+        GridPane.setConstraints(outputTextArea3, 1,3 );
+
+
+        //Retry button
+        Button RetryButton3 = new Button("Retry");
+        RetryButton3.setOnAction(e->{ primaryStage.setScene(FirstScene);
+            Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
+            primaryStage.setX((primScreenBounds.getWidth() - primaryStage.getWidth()) / 2);
+            primaryStage.setY((primScreenBounds.getHeight() - primaryStage.getHeight()) / 2); });
+
+        //Exit button
+        Button ExitButton3 = new Button("Exit");
+        ExitButton3.setOnAction(e->{Platform.exit();});
+
+        grid3.getChildren().addAll(ErrorsLabel, Errors, LabelInputFile3, inputTextArea3, LabelOutputFile3, outputTextArea3,
+                RetryButton3, ExitButton3);
+
+        //putting constraints on HBox and VBox
+        HBox hBox3 = new HBox();
+        hBox3.setPadding(new Insets(10,10,10,10));
+        hBox3.setSpacing(10);
+        hBox3.getChildren().addAll(RetryButton3, ExitButton3);
+
+        VBox vBox3 = new VBox();
+        vBox3.getChildren().addAll(grid3, hBox3);
+
+        ThirdScene = new Scene (vBox3);
+
     }
 
     public void BrowseButtonClicked(Stage primaryStage, FileChooser filePath, TextField inputFileName){
@@ -235,7 +302,7 @@ public class Main extends Application {
             outputFile = defaultOutputFile;
 
         ////////call the function that changes in the files, you don't need to pass any parameters since all the files are in global variables
-        if (choice.getValue().compareTo("Check Consistency") == 0){}
+        if (choice.getValue().compareTo("Check Consistency") == 0){Check2();}
         else if (choice.getValue().compareTo("Formatting") == 0)
         {
             try {
@@ -309,10 +376,10 @@ public class Main extends Application {
             }
         }
         inputTextArea.setText(sb1.toString());
+        inputTextArea3.setText(sb1.toString());
 
         //reading output file to text area
-        //String fileName2 = outputFile.getAbsolutePath(); //this should be used instead when we are really working
-        String fileName2 = defaultOutputFile.getAbsolutePath();
+        String fileName2 = outputFile.getAbsolutePath();
         BufferedReader br2 = null;
         try {
             br2 = new BufferedReader(new FileReader(fileName2, StandardCharsets.UTF_8));
@@ -347,15 +414,258 @@ public class Main extends Application {
             }
         }
         outputTextArea.setText(sb2.toString());
+        outputTextArea3.setText(sb2.toString());
 
-
-        primaryStage.setScene(SecondScene);
+        if (choice.getValue().compareTo("Check Consistency") == 0)
+            primaryStage.setScene(ThirdScene);
+        else primaryStage.setScene(SecondScene);
         Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
         primaryStage.setX((primScreenBounds.getWidth() - primaryStage.getWidth()) / 2);
         primaryStage.setY((primScreenBounds.getHeight() - primaryStage.getHeight()) / 2);
     }
 
+    public void Check2() {
+        StringBuilder sb3 = new StringBuilder();
+        try {
+            dataRead = new BufferedReader(new FileReader(inputFile));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            dataWrite = new BufferedWriter(new FileWriter(outputFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            Stack<String> open = new Stack<>();
+            Stack<Integer> la = new Stack<>();
+            Integer index;
+            int lines = 0;
+            int openline = 0;
+            int i = 0;
+            String s = "";
+            String s2;
+            String tag = "";
+            Integer lastSearch = 0;
+            Integer l;
+            boolean miss = false;
+            boolean notclosed = false;
+            boolean firstline = true;
+            boolean error_flag = false;
+            int p = -1;
+            Node root = new Node("", "root", null);
+            Node current = root;
+            while ((s2 = dataRead.readLine()) != null) {
+                lines++;
+                if (firstline) {
+                    s = s.concat(lines + "  " + s2);
+                    firstline = false;
+                } else {
+                    s = s.concat("\r\n"+ (lines)+ "  " + s2);
+                }
+                l = s.length();
+                while (l > 0) {
+                    i = 0;
+                    while (Character.compare(s.charAt(i), ' ') == 0 || Character.compare(s.charAt(i), '\n') == 0 ||
+                            Character.compare(s.charAt(i), '\r') == 0 || Character.compare(s.charAt(i), '\t') == 0) {
+                        dataWrite.write(s.charAt(i));
+                        i++;
+                    }
+                    s = s.substring(i);
+                    Integer compare = Character.compare(s.charAt(0), '<');
 
+                    //If the data is a text "tag value"
+                    if (compare != 0) {
+                        //get the index of the last character in the text
+                        index = s.indexOf('<', lastSearch);
+
+                        //if the index doesn't exist, then it is in the next line
+                        if (index == -1) {
+                            //Update last search index to speed up the search in the next loop
+                            lastSearch = l - 1;
+                            break;
+                        }
+                        dataWrite.write(s.substring(0, index));
+                        s = s.substring(index);
+
+                    }
+
+                    //If the data is a tag
+                    else {
+                        if(notclosed == false)
+                        {openline = lines;}
+
+                        // Search for the end of the tag
+                        index = s.indexOf(">", lastSearch);
+                        if (index == -1) {
+                            lastSearch = l - 1;
+                            notclosed = true;
+                            break;
+                        }
+                        //New
+                        notclosed = false;
+                        int second_open = s.indexOf("<", 1);
+                        if(second_open != -1 &&index > second_open)
+                        {
+                            index = second_open;
+                            miss = true;
+                            error_flag = true;
+                        }
+                        //Check if it is open tag or closing tag
+                        compare = Character.compare(s.charAt(1), '/');
+
+                        //If it is a closing tag
+                        if (compare == 0) {
+                            tag = s.substring(2, index);
+                            if(miss == true)
+                            {
+                                p = s.substring(0, second_open).indexOf("\r\n");
+                                sb3.append("Error in line "+openline+ " missing '>' in the close tag");
+                                sb3.append(System.lineSeparator());
+                                if( p == -1)
+                                {
+                                    tag = s.substring(2,second_open);
+                                }
+                                else
+                                {
+                                    tag = s.substring(2,p);
+                                }
+                            }
+
+                            if (!open.empty() && tag.compareTo(open.peek()) == 0) {
+                                dataWrite.write("</" + open.peek() + ">");
+                                open.pop();
+                                la.pop();
+
+                            } else if(!open.empty()) {
+                                sb3.append("Error in line " + la.peek() + " missmatch in opening tag " + open.peek());
+                                sb3.append(System.lineSeparator());
+                                error_flag = true;
+                                dataWrite.write("</" + open.peek() + ">");
+                                la.pop();
+                                open.pop();
+                            }
+
+                        }
+                        //Check if the tag is a comment, a processing directive or self closing tag
+                        Integer compare2 = Character.compare(s.charAt(index - 1), '/');
+                        Integer compare3 = Character.compare(s.charAt(1), '!');
+                        Integer compare5 = Character.compare(s.charAt(2), '-');
+                        Integer compare6 = Character.compare(s.charAt(3), '-');
+                        Integer compare4 = Character.compare(s.charAt(1), '?');
+
+                        if(compare!=0) {
+                            if (compare3 == 0 && compare6 == 0 && compare5 == 0) {
+                                if(miss == true)
+                                {
+                                    int o = s.indexOf("--",4);
+                                    dataWrite.write(s.substring(0, o) + "-->");
+                                    p = s.substring(0, second_open).indexOf("\r\n");
+                                    sb3.append("Error in line " + (openline) + " missing '>' in closing of the comment tag ");
+                                    sb3.append(System.lineSeparator());
+                                    p = o + 2;
+                                }
+                                else
+                                {if (Character.compare(s.charAt(index - 1), '-') != 0 || Character.compare(s.charAt(index - 2), '-') != 0) {
+                                    sb3.append("Error in line " + openline + " in closing of the comment tag ");
+                                    sb3.append(System.lineSeparator());
+                                    error_flag = true;
+                                    if(Character.compare(s.charAt(index - 1), '-') != 0 && Character.compare(s.charAt(index - 2), '-') != 0)
+                                        dataWrite.write(s.substring(0, index) + "-->");
+                                    else if((Character.compare(s.charAt(index - 1), '-') == 0 && Character.compare(s.charAt(index - 2), '-') != 0)
+                                            ||(Character.compare(s.charAt(index - 1), '-') == 0 && Character.compare(s.charAt(index - 2), '-') != 0))
+                                        dataWrite.write(s.substring(0, index) + "->");
+
+                                }
+                                else
+                                {dataWrite.write(s.substring(0, index + 1));}}
+
+                            } else if (compare4 == 0) {
+                                if(miss == true)
+                                {
+                                    int o = s.indexOf("?",2);
+                                    dataWrite.write(s.substring(0, o) + "?>");
+                                    //p = s.substring(0, second_open).indexOf("\r\n");
+                                    sb3.append("Error in line " + (openline) + " missing '>' in closing of the preprocessor tag ");
+                                    sb3.append(System.lineSeparator());
+                                    p = o+1;
+
+                                }
+                                else
+                                {if (Character.compare(s.charAt(index - 1), '?') != 0) {
+                                    sb3.append("Error in line " + openline+ " in closing of the preprocessor tag ");
+                                    sb3.append(System.lineSeparator());
+                                    error_flag = true;
+                                    dataWrite.write(s.substring(0, index - 1) + "?>");
+                                }
+                                else
+                                {dataWrite.write(s.substring(0, index + 1));}}
+                            } else if (compare2 == 0 && miss == false) {
+                                dataWrite.write(s.substring(0, index + 1));
+                            } else {
+
+                                int k = s.indexOf(' ');
+                                p = s.substring(0,index).indexOf("\r\n");
+                                if(p == -1)
+                                {if (k == -1 || k > index)
+                                    tag = s.substring(1, index);
+                                else
+                                    tag = s.substring(1, k);}
+                                else
+                                    tag = s.substring(1, p);
+                                open.push(tag);
+
+                                la.push(lines);
+                                if(miss == false)
+                                    dataWrite.write(s.substring(0, index + 1));
+                                else
+                                {dataWrite.write(s.substring(0, index) + ">");
+                                    sb3.append("Error in line " + (openline) + " missing '>'");
+                                    sb3.append(System.lineSeparator());
+                                }
+                            }
+
+                        }
+                        if(miss == true) {
+                            if(p == -1)
+                                index--;
+                            else
+                                index = p-1;
+                        }
+                        s = s.substring(index + 1);
+                    }
+                    l = s.length();
+                    lastSearch = 0;
+                    miss = false;
+
+                }
+
+            }
+            if (open.empty() && error_flag==false) {
+                sb3.append("No Errors");
+                sb3.append(System.lineSeparator());
+            } else {
+
+                while (!open.empty()) {
+                    lines ++;
+                    dataWrite.write("\n"+lines+"  ");
+                    dataWrite.write("</" + open.peek() + ">");
+                    sb3.append("Error in line "+la.peek()+" due to unclosed tags for opening tag "+open.peek());
+                    sb3.append(System.lineSeparator());
+                    la.pop();
+                    open.pop();
+
+                    //System.out.print("Errors" + "\n");
+                }}
+            dataRead.close();
+            dataWrite.close();
+            Errors.setText(sb3.toString());
+
+        } catch(Exception ex)
+        {
+            return;
+        }
+    }
 
 
     public void compress() throws IOException {
@@ -571,6 +881,3 @@ public class Main extends Application {
         }
     }
 }
-
-
-
