@@ -75,7 +75,7 @@ public class TST {
     // c is the character to be inserted "Note that each time we add a new character to an already existing string"
     //"first" initialized to true
     // code is the code of the new string
-    void insert(TSTNode p, char c, Boolean first, char code)
+    void insert(TSTNode p, char c, Boolean first, int code)
     {
         if(first)
         {

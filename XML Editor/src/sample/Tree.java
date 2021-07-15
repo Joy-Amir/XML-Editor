@@ -10,9 +10,10 @@ public class Tree
 {
     private Node root;
 
-    public void createTree(BufferedReader dataRead)
+    public long createTree(BufferedReader dataRead)
     {
         Integer index;
+        long lines = 0;
         try
         {
             String s = "";
@@ -23,6 +24,7 @@ public class Tree
             Node current = root;
             while ((s2 = dataRead.readLine() )!= null)
             {
+                lines++;
                 //Remove extra spaces if any
                 s2 = s2.trim();
                 s = s.concat(s2);
@@ -47,7 +49,12 @@ public class Tree
                             break;
                         }
                         //If the string length is less than the line limit, print it in a single line
-                        current.setValue(s.substring(0,index));
+                        //ADDED#####################################################
+
+                        if(Character.compare(s.charAt(index - 1),' ') == 0)
+                            current.setValue(s.substring(0,index-1));
+                        else
+                            current.setValue(s.substring(0,index));
                         s = s.substring(index);
 
                     }
@@ -117,8 +124,9 @@ public class Tree
 
         }catch(Exception ex)
         {
-            return;
+            return -1;
         }
+        return lines;
     }
 
     public void minify(BufferedWriter dataWrite)

@@ -2,7 +2,7 @@ package sample;
 
 public class TSTNode {
     private char data;
-    private char code;
+    private int code;
     private boolean end;
     private TSTNode left;
     private TSTNode mid;
@@ -17,11 +17,11 @@ public class TSTNode {
         end = false;
     }
 
-    public void setCode(char c)
+    public void setCode(int c)
     {
         code = c;
     }
-    public char getCode ()
+    public int getCode ()
     {
         return code;
     }
