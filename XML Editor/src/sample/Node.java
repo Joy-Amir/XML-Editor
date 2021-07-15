@@ -1,6 +1,7 @@
 package sample;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class Node
 {
@@ -60,6 +61,19 @@ public class Node
     public Node getParent(){
         return Parent;
     }
+    public static Comparator<Node> comp = new Comparator<Node>() {
+
+        public int compare(Node s1, Node s2) {
+            String node1 = s1.getName();
+            String node2 = s2.getName();
+
+            //ascending order
+            return node1.compareTo(node2);
+
+            //descending order
+            //return StudentName2.compareTo(StudentName1);
+        }
+    };
 
 }
 
