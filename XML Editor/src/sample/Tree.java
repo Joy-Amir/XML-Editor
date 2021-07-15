@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Tree
 {
@@ -124,6 +125,7 @@ public class Tree
 
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return -1;
         }
         return lines;
@@ -136,6 +138,7 @@ public class Tree
             dataWrite.close();
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
 
@@ -171,6 +174,7 @@ public class Tree
             }
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
     }
@@ -181,6 +185,7 @@ public class Tree
             dataWrite.close();
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
     }
@@ -269,10 +274,298 @@ public class Tree
             }
         }catch(Exception ex)
         {
+            ex.printStackTrace();
             return;
         }
 
     }
+    public void print_XML(Node node, ArrayList<Node> arr, int level,BufferedWriter dataWrite) {
+        if (node == null)
+            return;
+
+        try {
+            int comp = Integer.compare(node.getChildrenNum(), 0);
+            String parent_value = node.getValue();
+            String name = node.getName();
+            int comp2 = Integer.compare(name.indexOf(' '), -1);
+            int flag = 0;
+            int flag_tagName = 0;
+            int flag3 = 0;
+            int m = 0;
+            String s = "";
+            String s2 = "";
+            String s3 = "";
+
+
+
+            //System.out.println(node.getChildrenNum());
+
+            //comment handling
+            if (node.getType().compareTo("comment") == 0 || node.getType().compareTo("preprocessor") == 0)
+                return;
+
+            if (node.getParent() != null) {
+                for (m = 0; m < arr.size(); m++) {
+
+                    s = node.getName();
+                    s2 = "";
+                    if (node.getValue().compareTo(arr.get(m).getValue()) == 0 && node.getName().compareTo(arr.get(m).getName()) == 0) {
+                        flag3 = 1;
+                        int j = s.indexOf(' ');
+                        if (j != -1)
+                            s = s.substring(0, j);
+                        if (m != 0) {
+                            s2 = arr.get(m - 1).getName();
+                            int k = s2.indexOf(' ');
+                            if (k != -1)
+                                s2 = s2.substring(0, k);
+                        }
+
+                        if (m == 0 || s.compareTo(s2) != 0) {
+                            dataWrite.write("\n");
+                            for (int i = 0; i < (4 * level); i++)
+                                dataWrite.write(" ");
+                            dataWrite.write("\"" + s + "\": [");
+
+
+                        }
+
+                        if (m + 1 < arr.size()) {
+                            s3 = arr.get(m + 1).getName();
+                            int k = s3.indexOf(' ');
+                            if (k != -1)
+                                s3 = s3.substring(0, k);
+                        }
+
+                        break;
+
+                    }
+
+                }
+                //<e name="value" id="val">text</e>
+
+                if ((node.getType().compareTo("self-close")) != 0 && (name.indexOf(' ') != -1)) {
+                    flag_tagName = 1;
+                    //################ Modified
+                    if (flag3 == 0) {
+                        dataWrite.write("\n");
+                        for (int i = 0; i < (4 * level); i++)
+                            dataWrite.write(" ");
+                        dataWrite.write("\"" + name.substring(0, name.indexOf(' ')) + "\": ");
+                        dataWrite.write("{");
+                    } else {
+                        dataWrite.write("\n");
+                        for (int i = 0; i < (4 * level) + 2; i++)
+                            dataWrite.write(" ");
+                        dataWrite.write("{");
+                    }
+
+
+                    int i = 0;
+                    int j = 0;
+                    int k;
+                    boolean flag4 = false;
+
+                    while ((i = name.indexOf(' ', j)) != -1) {
+                        dataWrite.write("\n");
+                        for (int o = 0; o < (4 * (level + 1)); o++)
+                            dataWrite.write(" ");
+                        //if(flag4)
+                        flag4 = true;
+                        dataWrite.write("\"@" + name.substring(i + 1, name.indexOf('=', i)) + "\": ");
+                        dataWrite.write(name.substring(k = name.indexOf('"', i), (j = name.indexOf('"', k + 1))) + "\",");
+                    }
+                    if (!node.getValue().isEmpty()) {
+                        dataWrite.write("\n");
+                        for (int o = 0; o < (4 * (level + 1)); o++)
+                            dataWrite.write(" ");
+                        dataWrite.write("\"#text\": " + "\"" + node.getValue() + "\"");
+                    }
+
+                }//if
+
+                //<e> text <a>text</a> </e>
+                else if (comp != 0 && !parent_value.isEmpty()) {
+                    flag_tagName = 1;
+                    //###################Modified
+                    if (flag3 == 0) {
+                        dataWrite.write("\n");
+                        for (int o = 0; o < (4 * (level)); o++)
+                            dataWrite.write(" ");
+                        dataWrite.write("\"" + node.getName() + "\": ");
+                        dataWrite.write("{");
+                    } else {
+                        dataWrite.write("\n");
+                        for (int i = 0; i < (4 * level) + 2; i++)
+                            dataWrite.write(" ");
+                        dataWrite.write("{");
+                    }
+                    dataWrite.write("\n");
+                    for (int o = 0; o < (4 * (level + 1)); o++)
+                        dataWrite.write(" ");
+                    dataWrite.write("\"#text\": " + "\"" + node.getValue() + "\",");
+                }
+
+
+                //self close handling
+                //#################Modified
+
+                else if (node.getType().compareTo("self-close") == 0) {
+
+                    if (name.indexOf(' ') != -1) {
+                        if (flag3 == 0) {
+                            dataWrite.write("\n");
+                            for (int o = 0; o < (4 * (level)); o++)
+                                dataWrite.write(" ");
+                            dataWrite.write("\"" + name.substring(0, name.indexOf(' ')) + "\": ");
+                            dataWrite.write("{");
+                        } else {
+                            dataWrite.write("\n");
+                            for (int i = 0; i < (4 * level) + 2; i++)
+                                dataWrite.write(" ");
+                            dataWrite.write("{");
+                        }
+
+                        for (int i = 0; i < name.length(); i++) {
+                            if (name.charAt(i) == ' ') {
+                                dataWrite.write("\n");
+                                for (int o = 0; o < (4 * (level + 1)); o++)
+                                    dataWrite.write(" ");
+                                dataWrite.write("\"@" + name.substring(name.indexOf(' ') + 1, name.indexOf('=')) + "\": ");
+                                dataWrite.write(name.substring(name.indexOf('"'), name.indexOf('/')));
+
+                                //return;
+                            }
+
+
+                        }//for
+
+                    } else {
+                        dataWrite.write("\n");
+                        for (int o = 0; o < (4 * (level)); o++)
+                            dataWrite.write(" ");
+                        dataWrite.write("\"" + name.substring(0, name.indexOf('/')) + "\": null");
+
+                    }
+                }//if
+
+                //<id>123</id>
+                else {
+                    flag = 1;
+                    if (flag3 == 0) {
+                        dataWrite.write("\n");
+                        for (int o = 0; o < (4 * (level)); o++)
+                            dataWrite.write(" ");
+                        dataWrite.write("\"" + node.getName() + "\": ");
+                        dataWrite.write("\"" + node.getValue() + "\"");
+                    } else {
+                        dataWrite.write("\n");
+                        for (int i = 0; i < (4 * (level + 1)); i++) //#####################################################
+                            dataWrite.write(" ");
+                        dataWrite.write("\"" + node.getValue() + "\"");
+                    }
+
+                }
+                //<e> <a>text</a> <b>text</b> </e>
+                //<e> <a>text</a> <a>text</a> </e>
+                if (comp != 0) {
+                    int x;
+                    if (parent_value.isEmpty()) {
+                        if (flag_tagName == 0) {
+                            //###########33Added
+                            if (flag3 == 0) {
+                                dataWrite.write("\n");
+                                for (int o = 0; o < (4 * (level)); o++)
+                                    dataWrite.write(" ");
+                                dataWrite.write("\"" + node.getName() + "\": ");
+                                dataWrite.write("{");
+                            } else {
+                                dataWrite.write("\n");
+                                for (int i = 0; i < (4 * level) + 2; i++)
+                                    dataWrite.write(" ");
+                                dataWrite.write("{");
+                            }
+
+                        }
+                    }
+                    ArrayList<Node> son = node.getChildren();
+                    arr = new ArrayList<Node>();
+
+                    Collections.sort(son, Node.comp);
+                    for (x = 0; x < node.getChildrenNum() - 1; x++) {
+                        String S = son.get(x).getName();
+                        String S2 = son.get(x + 1).getName();
+                        int i = S.indexOf(' ');
+                        int j = S2.indexOf(' ');
+
+                        if (i != -1) {
+                            S = S.substring(0, i);
+                        }
+                        if (j != -1) {
+                            S2 = S2.substring(0, j);
+                        }
+
+                        if (S.compareTo(S2) == 0) {
+                            arr.add(son.get(x));
+                            arr.add(son.get(x + 1));
+                        }
+                    }
+
+                }
+            }
+
+            ArrayList<Node> Child = node.getChildren();
+
+            for (int i = 0; i < node.getChildrenNum(); i++) {
+
+                if (i == 0 && node.getValue().compareTo("") != 0)
+                    dataWrite.write(",");
+                print_XML(Child.get(i), arr, level + 1,dataWrite);
+                String Type = Child.get(i).getType();
+                if (i < node.getChildrenNum() - 1 && Type.compareTo("comment") != 0 && Type.compareTo("preprocessor") != 0) {
+                    dataWrite.write(","); //###################
+                }
+            }
+            if (node.getParent() != null && flag == 0) {
+                dataWrite.write("\n");
+                for (int o = 0; o < (4 * (level) + 2); o++)
+                    dataWrite.write(" ");
+                dataWrite.write("}");
+
+            }
+            if (flag3 == 1 && (m == arr.size() - 1 || s.compareTo(s3) != 0)) {
+                dataWrite.write("\n");
+                for (int o = 0; o < (4 * (level)); o++)
+                    dataWrite.write(" ");
+                dataWrite.write("]");
+            }
+        }//try
+        catch(Exception ex)
+        {
+            ex.printStackTrace();
+            return;
+        }
+
+    }//fn
+
+
+    public void print_xml(BufferedWriter dataWrite) {
+        ArrayList<Node> array = new ArrayList<Node>();
+        print_XML(root, array, -1,dataWrite);
+        try{
+        dataWrite.close();
+        }
+        catch(Exception ex)
+        {
+            ex.printStackTrace();
+            return;
+        }
+        //System.out.print("HElloo");
+    }
 
 }
+
+
+
+
 
